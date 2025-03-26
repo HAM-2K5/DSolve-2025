@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Medical Officer Interface{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="mb-4">Medical Officer Interface</h2>
+        
+        <!-- Patient Search Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Search Patient</h5>
+            </div>
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" id="searchPhone" placeholder="Enter patient's phone number">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Patient Information Form -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Patient Information</h5>
+            </div>
+            <div class="card-body">
+                <form id="patientForm">
+                    <input type="hidden" id="patientId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Patient Name</label>
+                            <input type="text" class="form-control" id="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dob" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="dob">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="bloodType" class="form-label">Blood Type</label>
+                            <input type="text" class="form-control" id="bloodType">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="allergies" class="form-label">Allergies (comma-separated)</label>
+                            <input type="text" class="form-control" id="allergies">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="conditions" class="form-label">Medical Conditions (comma-separated)</label>
+                            <input type="text" class="form-control" id="conditions">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="emergencyContact" class="form-label">Emergency Contact</label>
+                            <input type="tel" class="form-control" id="emergencyContact">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">Save Patient Information</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Alert -->
+<div class="alert alert-success mt-3" id="successAlert" style="display: none;"></div>
+<div class="alert alert-danger mt-3" id="errorAlert" style="display: none;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('searchPhone').value;
+    try {
+        const response = await fetch(`/api/patient/phone/${phone}`);
+        const data = await response.json();
+        if (data.success) {
+            const patient = data.patient;
+            document.getElementById('patientId').value = patient.id;
+            document.getElementById('name').value = patient.name;
+            document.getElementById('phone').value = patient.phone_number;
+            document.getElementById('dob').value = patient.date_of_birth || '';
+            document.getElementById('bloodType').value = patient.blood_type || '';
+            document.getElementById('allergies').value = patient.allergies ? patient.allergies.join(', ') : '';
+            document.getElementById('conditions').value = patient.medical_conditions ? patient.medical_conditions.join(', ') : '';
+            document.getElementById('emergencyContact').value = patient.emergency_contact || '';
+            showAlert('success', 'Patient information loaded successfully');
+        } else {
+            showAlert('error', 'Patient not found');
+        }
+    } catch (error) {
+        showAlert('error', 'Error searching for patient');
+    }
+});
+
+document.getElementById('patientForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const patientId = document.getElementById('patientId').value;
+    
+    // Parse allergies and conditions into arrays, handling empty values
+    const allergies = document.getElementById('allergies').value
+        .split(',')
+        .map(a => a.trim())
+        .filter(a => a !== '');
+    
+    const conditions = document.getElementById('conditions').value
+        .split(',')
+        .map(c => c.trim())
+        .filter(c => c !== '');
+    
+    const patientData = {
+        name: document.getElementById('name').value,
+        phone_number: document.getElementById('phone').value,
+        date_of_birth: document.getElementById('dob').value || null,
+        blood_type: document.getElementById('bloodType').value || null,
+        allergies: allergies.length > 0 ? allergies : null,
+        medical_conditions: conditions.length > 0 ? conditions : null,
+        emergency_contact: document.getElementById('emergencyContact').value || null
+    };
+
+    try {
+        const url = patientId ? `/api/patient/${patientId}` : '/api/patient';
+        const method = patientId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(patientData)
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showAlert('success', patientId ? 'Patient information updated successfully' : 'New patient added successfully');
+            if (!patientId) {
+                document.getElementById('patientId').value = data.patient_id;
+            }
+        } else {
+            showAlert('error', data.error || 'Error saving patient information');
+        }
+    } catch (error) {
+        showAlert('error', 'Error saving patient information');
+        console.error('Error:', error);
+    }
+});
+
+function showAlert(type, message) {
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert = document.getElementById('errorAlert');
+    
+    if (type === 'success') {
+        successAlert.textContent = message;
+        successAlert.style.display = 'block';
+        errorAlert.style.display = 'none';
+    } else {
+        errorAlert.textContent = message;
+        errorAlert.style.display = 'block';
+        successAlert.style.display = 'none';
+    }
+    
+    setTimeout(() => {
+        successAlert.style.display = 'none';
+        errorAlert.style.display = 'none';
+    }, 5000);
+}
+
+function clearForm() {
+    document.getElementById('patientForm').reset();
+    document.getElementById('patientId').value = '';
+    showAlert('success', 'Form cleared');
+}
+</script>
+{% endblock %} 

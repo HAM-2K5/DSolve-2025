@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Emergency Medical Information System</h1>
+        <p class="lead mb-5">Quick access to critical patient information for emergency responders and medical staff.</p>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Medical Officer Interface</h5>
+                        <p class="card-text">Manage patient records, update medical information, and maintain the database.</p>
+                        <a href="/medical-officer" class="btn btn-primary">Access Medical Officer Interface</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Paramedic Interface</h5>
+                        <p class="card-text">Quick access to critical patient information in emergency situations.</p>
+                        <a href="/paramedic" class="btn btn-danger">Access Paramedic Interface</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-4">
+            <h4 class="alert-heading">Important Notes</h4>
+            <ul class="text-start">
+                <li>This system is designed for quick access to critical medical information</li>
+                <li>Always verify patient identity before administering treatment</li>
+                <li>Keep patient information up to date during hospital visits</li>
+                <li>In case of no patient record, follow standard emergency protocols</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 

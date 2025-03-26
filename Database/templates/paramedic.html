@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Paramedic Interface{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4">Emergency Patient Information</h2>
+        
+        <!-- Search Form -->
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Quick Patient Lookup</h5>
+            </div>
+            <div class="card-body">
+                <form id="searchForm" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="tel" class="form-control form-control-lg" id="searchPhone" 
+                               placeholder="Enter patient's phone number" required>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-danger btn-lg w-100">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Patient Information Display -->
+        <div class="card" id="patientInfo" style="display: none;">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Patient Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Patient Name</h6>
+                        <p class="h4" id="patientName"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Blood Type</h6>
+                        <p class="h4" id="bloodType"></p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-danger">⚠️ Allergies</h6>
+                        <p class="h5" id="allergies"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">⚠️ Medical Conditions</h6>
+                        <p class="h5" id="conditions"></p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Emergency Contact</h6>
+                        <p class="h5" id="emergencyContact"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Last Updated</h6>
+                        <p class="h5" id="lastUpdated"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- No Patient Found Alert -->
+        <div class="alert alert-warning mt-4" id="noPatientAlert" style="display: none;">
+            <h4 class="alert-heading">⚠️ No Patient Record Found</h4>
+            <p class="mb-0">Please proceed with standard emergency protocols.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('searchForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById('searchPhone').value;
+    const patientInfo = document.getElementById('patientInfo');
+    const noPatientAlert = document.getElementById('noPatientAlert');
+    
+    try {
+        const response = await fetch(`/api/patient/phone/${phone}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const patient = data.patient;
+            
+            document.getElementById('patientName').textContent = patient.name;
+            document.getElementById('bloodType').textContent = patient.blood_type || 'Not specified';
+            document.getElementById('allergies').textContent = patient.allergies ? patient.allergies.join(', ') : 'None';
+            document.getElementById('conditions').textContent = patient.medical_conditions ? patient.medical_conditions.join(', ') : 'None';
+            document.getElementById('emergencyContact').textContent = patient.emergency_contact || 'Not specified';
+            document.getElementById('lastUpdated').textContent = new Date(patient.last_updated).toLocaleString();
+            
+            patientInfo.style.display = 'block';
+            noPatientAlert.style.display = 'none';
+        } else {
+            patientInfo.style.display = 'none';
+            noPatientAlert.style.display = 'block';
+        }
+    } catch (error) {
+        patientInfo.style.display = 'none';
+        noPatientAlert.style.display = 'block';
+    }
+});
+</script>
+{% endblock %} 
